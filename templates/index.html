@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gossip Semantic Search</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    text-align: center;
+}
+
+.search-bar {
+    display: flex;
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px 0 0 4px;
+}
+
+.search-bar button {
+    padding: 10px 20px;
+    border: none;
+    background-color: #007BFF;
+    color: white;
+    cursor: pointer;
+    border-radius: 0 4px 4px 0;
+}
+
+table {
+    width: 80%;
+    margin: 0 auto;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #007BFF;
+    color: white;
+}
+
+tr:hover {
+    background-color: #f5f5f5;
+}
+
+td a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+td a:hover {
+    text-decoration: underline;
+}
+</style>
+</head>
+<body>
+    <h1>Gossip Semantic Search</h1>
+    
+    <div class="search-bar">
+        <input type="text" id="query" placeholder="Enter your query...">
+        <button onclick="search()">Search</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        async function search() {
+            const query = document.getElementById('query').value;
+            const resultsContainer = document.getElementById('results');
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/search?query=' + query, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                resultsContainer.innerHTML = '';
+
+                if (data.response_test) {
+                    const table = document.createElement('table');
+                    table.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.response_test.map(result => `
+                                <tr>
+                                    <td><a href="${result.link}" target="_blank">${result.title}</a></td>
+                                    <td>${result.date}</td>
+                                    <td>${result.description}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    `;
+                    resultsContainer.appendChild(table);
+                }
+            } catch (error) {
+                resultsContainer.innerHTML = '<p>There was an error fetching the results.</p>';
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

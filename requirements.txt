@@ -1,0 +1,9 @@
+pandas
+numpy
+feedparser
+sentence-transformers
+tf-keras
+fastapi
+scikit-learn
+tensorflow
+uvicorn
