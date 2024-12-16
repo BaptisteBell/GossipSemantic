@@ -7,3 +7,4 @@ fastapi
 scikit-learn
 tensorflow
 uvicorn
+scrapy

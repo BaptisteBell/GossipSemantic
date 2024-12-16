@@ -19,7 +19,12 @@ def get_most_similar(sentence:str,
                      embeddings: List[List[float]],
                      model: SentenceTransformer,
                      articles: pd.DataFrame,
-                     n:int=5) -> List[Dict[str, Any]]:
+                     n:int=10) -> List[Dict[str, Any]]:
+
+    """
+    Find the articles most similar to a given sentence using embeddings and cosine similarity.
+    Returns a list of the 10 most similar articles sorted by date.
+    """
 
     query_embedding = model.encode(sentence).reshape(1, -1)
     
@@ -36,7 +41,9 @@ def get_most_similar(sentence:str,
             'title': article['title'],
             'url': article['url'], 
             'date': formatted_date,
-            'description': article['summary']
+            'description': article['summary'],
+            'year': date.year
         })
     
+    most_similar = sorted(most_similar, key=lambda x: x['year'], reverse=True)
     return most_similar

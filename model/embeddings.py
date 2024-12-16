@@ -6,14 +6,12 @@ import numpy as np
 from datetime import datetime
 from sentence_transformers import SentenceTransformer
 
-def load_data():
+def load_data(output_path: str) -> pd.DataFrame:
     '''
     Load the data from the gossip_scrapper output file
     '''
-    output_path_vsd = "gossip_scrapper/vsd_articles.jl"
-
     data = []
-    with open(output_path_vsd, 'r', encoding='utf-8') as file:
+    with open(output_path, 'r', encoding='utf-8') as file:
         for line in file:
             try:
                 data.append(json.loads(line))
@@ -22,11 +20,24 @@ def load_data():
 
     return pd.DataFrame(data)
 
+def load_all_data():
+    output_path_vsd = "gossip_scrapper/vsd_articles.jl"
+    output_path_public = "gossip_scrapper/public_articles.jl"
+
+    df_vsd = load_data(output_path_vsd)
+    df_public = load_data(output_path_public)
+
+    return pd.concat([df_vsd, df_public], ignore_index=True)
+
 def convert_date(date_str: str) -> str:
     date_obj = datetime.strptime(date_str, '%a, %d %b %Y %H:%M:%S %z')
     return date_obj.strftime('%Y-%m-%dT%H:%M:%S%z')[:-4] + '00:00'
 
-def add_rss(df: pd.DataFrame) -> pd.DataFrame:
+def concat_data(df: pd.DataFrame, df_rss: pd.DataFrame) -> pd.DataFrame:
+    df_concat = pd.concat([df, df_rss], ignore_index=True)
+    return df_concat
+
+def add_rss() -> pd.DataFrame:
     '''
     Add the RSS feeds to the dataframe
     '''
@@ -54,15 +65,14 @@ def add_rss(df: pd.DataFrame) -> pd.DataFrame:
     })
 
     df_rss['date'] = df_rss['date'].apply(convert_date)
-    return pd.concat([df, df_rss], ignore_index=True)
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     '''
     Clean the data
     '''
-    df = df.drop_duplicates(subset=['title'])
-    df = df.dropna(subset=['title', 'summary'])
-    return df
+    df_cleaned = df.replace("N/A", pd.NA).dropna()
+    df_cleaned = df_cleaned.drop_duplicates(subset=['url'])
+    return df_cleaned
 
 def save_data(df: pd.DataFrame):
     '''
@@ -74,7 +84,8 @@ def encode_articles(df: pd.DataFrame, model):
     '''
     Encode the articles with the SentenceTransformer model
     '''
-    embeddings = model.encode(df['title'].values)
+    sentences = df['title'].tolist()
+    embeddings = model.encode(sentences)
     np.save('data/embeddings.npy', embeddings)
 
 def main():
@@ -82,15 +93,20 @@ def main():
     Main function
     '''
     print('Loading data...')
-    df = load_data()
-    df = add_rss(df)
+    df = load_all_data()
+    df_rss = add_rss()
+    df = concat_data(df, df_rss)
+    
     df = clean_data(df)
+    
     print('Data loaded and cleaned')
     save_data(df)
     
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    
     print('Encoding articles...')
     encode_articles(df, model)
+    
     print('Articles encoded')
 
 if __name__ == '__main__':

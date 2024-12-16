@@ -1,20 +1,43 @@
 import scrapy
 
-class PublicSpider(scrapy.Spider):
+MAX_PAGES = 400
+
+class VSDSpider(scrapy.Spider):
     name = "public"
-    start_urls = ['https://www.public.fr/News']
+    start_urls = ['https://www.public.fr/people', 'https://www.public.fr/tele', 'https://www.public.fr/faits-divers', 'https://www.public.fr/lifestyle']
 
     def parse(self, response):
-        articles = response.css('div.article')
-        for article in articles:
-            yield {
-                'title': article.css('h3.article-title a::text').get().strip(),
-                'url': response.urljoin(article.css('h3.article-title a::attr(href)').get()),
-                'date': article.css('span.article-date::text').get(),
-                'summary': article.css('p.article-summary::text').get().strip(),
-            }
+        article_links = response.css('a.block::attr(href)').getall()
 
-        # Pagination : suivre le lien vers la page suivante
-        next_page = response.css('a.next::attr(href)').get()
-        if next_page:
-            yield response.follow(next_page, self.parse)
+        for link in article_links:
+            full_link = response.urljoin(link)
+            yield scrapy.Request(full_link, callback=self.parse_article, dont_filter=True)
+
+        base_url = response.url.split('/page/')[0].rstrip('/')
+        print("Base url: ", base_url)
+
+        try:
+            current_page = int(response.url.split('/page/')[1].split('/')[0])
+        except:
+            current_page = 1
+        
+        next_page = f'{base_url}/page/{current_page + 1}'
+        print("Next page: ", next_page, 'index_next_page: ', current_page + 1, '\n')
+        
+        if next_page and current_page < MAX_PAGES:
+            next_page_url = response.urljoin(next_page)
+            yield scrapy.Request(next_page_url, callback=self.parse)
+
+    def parse_article(self, response):
+        title = response.css('title::text').get()
+        url = response.css('link[rel="canonical"]::attr(href)').get()
+        date = response.css('meta[property="article:published_time"]::attr(content)').get()
+        summary = response.css('meta[property="og:description"]::attr(content)').get()
+
+        yield {
+            'title': title.strip() if title else 'N/A',
+            'url': url.strip() if url else 'N/A',
+            'date': date.strip() if date else 'N/A',
+            'summary': summary.strip() if summary else 'N/A',
+        }
+

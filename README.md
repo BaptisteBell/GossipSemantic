@@ -1,69 +1,80 @@
 # Gossip Semantic Search
 
-## Installation des prérequis
+## Installing prerequisites
 
-Assurez-vous d'avoir **Python 3.10** minimum installé.
+Make sure you have at least **Python 3.10** installed.
 
-Installez les dépendances nécessaires avec :
+Install the necessary dependencies with 
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Lancer l'API
+## Launch API
 
-Pour démarrer l'API avec **Uvicorn**, exécutez :
+To start the API with **Uvicorn**, run :
 
 ```bash
-uvicorn api:app --reload
+uvicorn api:app
 ```
 
-L'API sera accessible à l'adresse : `http://127.0.0.1:8000`
+The API can be accessed at: `http://127.0.0.1:8000`
 
-## Scraper les données
+## Data scraping
 
-Le dossier `gossip_scrapper` contient le code pour scraper les articles avec **Scrapy**.
+The `gossip_scrapper` folder contains the code for scrapping articles with **Scrapy**.
 
-### Scraper les articles de VSD et Public :
+The scraping has already been completed, and the data is available in the `.jl` files for direct use with the API.
+
+> Note: Scraping data can be very time-consuming, depending on the number of articles you wish to retrieve.
+
+
+### Scrape articles from VSD and Public :
 
 ```bash
 cd gossip_scrapper
-scrapy crawl vsd -o vsd_articles.csv
-scrapy crawl public -o public_articles.csv
+scrapy crawl vsd -o vsd_articles.jl
+scrapy crawl public -o public_articles.jl
 ```
 
-### Création des embeddings
+## Creating embeddings
+
+The `embeddings.py` script is used to clean data and generate embeddings for articles.
+
 ```bash
-python .\model\embeddings.py 
+cd ..
+python model/embeddings.py
 ```
 
-## Structure des dossiers
+## Folder structure
 
 ```
 .
-├── gossip_scrapper/      # Contient le code Scrapy pour scraper les données
+├── gossip_scrapper/              # Contains Scrapy code to scrape data
 │   ├── spiders/
 │   └── ...
 │
-├── data/                 # Contient les données utiles au modèle et à l'API
-│   ├── articles.csv       # Articles au format CSV
-│   └── embeddings.npy       # Embeddings utilisés pour la recherche sémantique
+├── data/                         # Contains data useful to the model and API
+│   ├── articles.csv          # Articles informations in CSV format
+│   └── embeddings.npy            # Embeddings used for semantic search
 │
-├── model/                # Contient les fichiers liés au modèle
-│   ├── model_api.py                # script des fonsction du model
-│   ├── embeddings.py                # script des fonctions de traitements des données et création des embeddings des articles
-│   └── GossipSemanticSearch.ipynb # Notebook pour le test des données
+├── model/                        # Contains files related to the model
+│   ├── model_api.py              # Functions called by the APII
+│   ├── embeddings.py             # Script for data cleansing and embedding creation
+│   └── GossipSemanticSearch.ipynb # Notebook for testing code and visualizing data transformations (not useful)
 │
-├── templates/            # Contient le front-end de l'application
-│   └── index.html             # Code HTML pour l'interface utilisateur
+├── templates/                    #  Contains the application's front-end
+│   └── index.html                # HTML code for user interface
 │
-└── api.py                # Code de l'API FastAPI
+└── api.py                        # FastAPI API code
 ```
 
-## Utilisation du Notebook
+## Using the Notebook
 
-Le notebook `GossipSemanticSearch.ipynb` permet de :
+The `GossipSemanticSearch.ipynb` notebook allows you to :
 
-1. Charger les données.
-2. Nettoyer et transformer les données.
-3. Générer et tester les embeddings pour la recherche sémantique.
+1. Load data.
+2. View and test code.
+3. Observe the various stages of data transformation.
+
+> **Note:** The notebook is for testing and exploring code only. It does not generate embeddings for the API.
