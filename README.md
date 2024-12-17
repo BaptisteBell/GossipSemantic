@@ -42,7 +42,6 @@ scrapy crawl public -o public_articles.jl
 The `embeddings.py` script is used to clean data and generate embeddings for articles.
 
 ```bash
-cd ..
 python model/embeddings.py
 ```
 
